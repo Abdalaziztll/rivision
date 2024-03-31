@@ -1,115 +1,131 @@
 import 'package:flutter/material.dart';
-import 'package:value_notfi_and_nav_bar/model/book_model.dart';
-import 'package:value_notfi_and_nav_bar/serice/book_service.dart';
+import 'package:flutter/widgets.dart';
+import 'package:value_notfi_and_nav_bar/service/cat_service.dart';
 
 void main() {
   runApp(MyApp());
 }
 
-class MyApp extends StatefulWidget {
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
-List<Widget> pages = [HomePageWithApi(), SearchPage(), HelpPage()];
-
-int selectedIndex = 0;
-
-class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        home: Scaffold(
-      body: pages[selectedIndex],
-      bottomNavigationBar: NavigationBar(
-          animationDuration: Duration(seconds: 4),
-          labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-          onDestinationSelected: (value) {
-            setState(() {
-              selectedIndex = value;
-            });
+      home: Scaffold(
+        body: FutureBuilder(
+          future: getCat(),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return ListView.builder(
+                itemCount: snapshot.data!.length,
+                itemBuilder: (context, index) {
+                  return Card(
+                    child: ListTile(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CounterPage(),
+                            ));
+                      },
+                      trailing: Text((index + 1).toString()),
+                      leading: Image.network(snapshot.data![index].image),
+                      title: Text(snapshot.data![index].name),
+                      subtitle: Text(snapshot.data![index].origin),
+                    ),
+                  );
+                },
+              );
+            } else {
+              return LinearProgressIndicator();
+            }
           },
-          selectedIndex: selectedIndex,
-          destinations: const [
-            NavigationDestination(
-                selectedIcon: Icon(Icons.facebook),
-                tooltip: 'fake facebook',
-                icon: Icon(Icons.home),
-                label: 'HomePage'),
-            NavigationDestination(icon: Icon(Icons.card_travel), label: 'Cart'),
-            NavigationDestination(icon: Icon(Icons.help), label: 'Help')
-          ]),
-    ));
+        ),
+      ),
+    );
   }
 }
 
-class HomePageWithApi extends StatelessWidget {
-  HomePageWithApi({
-    super.key,
-  });
+class CounterPage extends StatefulWidget {
+  CounterPage({super.key});
 
-  ValueNotifier<List<BookModel>> books = ValueNotifier([]);
+  @override
+  State<CounterPage> createState() => _CounterPageState();
+}
+
+class _CounterPageState extends State<CounterPage> {
+  @override
+  void initState() {}
+
+  int counter = 0;
+  double width = 100;
+  double height = 100;
+  Color color = Colors.grey;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: IconButton(
+            onPressed: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CounterPagewihtoutStatfull(),
+                  ));
+            },
+            icon: Icon(Icons.countertops)),
+      ),
+      body: Center(
+        child: AnimatedContainer(
+          duration: Duration(seconds: 2),
+          width: width,
+          height: height,
+          color: color,
+          child: Center(
+            child: Text(
+              counter.toString(),
+            ),
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          setState(
+            () {
+              counter++;
+              print(counter);
+              width = width + 70;
+              height = height + 70;
+              color = Colors.red;
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+class CounterPagewihtoutStatfull extends StatelessWidget {
+  CounterPagewihtoutStatfull({super.key});
 
   ValueNotifier<int> counter = ValueNotifier(0);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: ElevatedButton(
-            onPressed: () async {
-              counter.value++;
-              List<BookModel> temp = await getBook();
-
-              // books.value.addAll(temp);
-              books.value = temp;
-            },
-            child: Text("Get Data")),
-      ),
-
-      // body: Center(
-      //     child: ValueListenableBuilder(
-      //   valueListenable: counter,
-      //   builder: (context, value, child) {
-      //     return Text(value.toString());
-      //   },
-      // )),
-      body: ValueListenableBuilder(
-          valueListenable: books,
-          builder: (context, value, _) {
-            return ListView.builder(
-              itemCount: value.length,
-              itemBuilder: (context, index) => ListTile(
-                leading: CircleAvatar(
-                  child: Image.network(value[index].cover_image),
-                ),
-                title: Text(value[index].title),
-                subtitle: Text(value[index].author),
-              ),
-            );
-          }),
-    );
-  }
-}
-
-class HelpPage extends StatelessWidget {
-  const HelpPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.blue,
-    );
-  }
-}
-
-class SearchPage extends StatelessWidget {
-  const SearchPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      // body: Fut,
+      appBar: AppBar(),
+      body: Center(
+          child: ValueListenableBuilder(
+        valueListenable: counter,
+        builder: (context, value, child) {
+          return Text(value.toString());
+        },
+      )),
+      floatingActionButton: FloatingActionButton(onPressed: () {
+        counter.value++;
+      }),
     );
   }
 }
